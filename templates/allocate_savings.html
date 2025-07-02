@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocate Savings - BudgetWise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 50px auto;
+            padding: 40px;
+            max-width: 600px;
+        }
+        
+        .form-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        }
+        
+        .allocation-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .goal-card {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .goal-card:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .remaining-display {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-title">
+                <h2><i class="fas fa-piggy-bank"></i> Allocate Savings</h2>
+                <p class="text-muted">Distribute your remaining {{ category.title() }} budget to your saving goals</p>
+            </div>
+            
+            <div class="allocation-info">
+                <h6><i class="fas fa-info-circle"></i> Allocation Instructions:</h6>
+                <ul class="mb-0">
+                    <li>Enter the amount you want to allocate to each goal</li>
+                    <li>You can allocate any amount up to your remaining budget</li>
+                    <li>Leave fields empty if you don't want to allocate to that goal</li>
+                    <li>Only positive amounts will be processed</li>
+                </ul>
+            </div>
+            
+            <div class="remaining-display">
+                <h4>Remaining {{ category.title() }} Budget</h4>
+                <h2 class="text-primary">£{{ "%.2f"|format(remaining_amount) }}</h2>
+                <p class="text-muted">Current Month: {{ current_month }}</p>
+            </div>
+            
+            <form method="POST">
+                {% for goal in goals %}
+                    <div class="goal-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-2">{{ goal.name }}</h5>
+                                <p class="mb-2">
+                                    <strong>Current Progress:</strong> £{{ "%.2f"|format(goal.current_amount) }} / £{{ "%.2f"|format(goal.target_amount) }}
+                                </p>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" 
+                                         style="width: {{ (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 }}%">
+                                        {{ "%.1f"|format((goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0) }}%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="amount_{{ goal.id }}" class="form-label">Allocate Amount (£)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">£</span>
+                                    <input type="number" 
+                                           class="form-control allocation-amount" 
+                                           id="amount_{{ goal.id }}"
+                                           name="amount_{{ goal.id }}"
+                                           step="0.01" 
+                                           min="0" 
+                                           max="{{ remaining_amount }}"
+                                           placeholder="0.00">
+                                </div>
+                                <small class="text-muted">Max: £{{ "%.2f"|format(remaining_amount) }}</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="fas fa-save"></i> Allocate Savings
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Real-time validation and total calculation
+        document.querySelectorAll('.allocation-amount').forEach(input => {
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value) || 0;
+                const max = parseFloat(this.getAttribute('max'));
+                
+                if (value > max) {
+                    this.value = max;
+                    alert(`Maximum allocation is £${max.toFixed(2)}`);
+                }
+                
+                // Calculate total allocated
+                let total = 0;
+                document.querySelectorAll('.allocation-amount').forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                
+                // Update remaining display
+                const remaining = {{ remaining_amount }} - total;
+                const remainingDisplay = document.querySelector('.remaining-display h2');
+                remainingDisplay.textContent = `£${remaining.toFixed(2)}`;
+                
+                // Change color based on remaining amount
+                if (remaining < 0) {
+                    remainingDisplay.className = 'text-danger';
+                } else if (remaining === 0) {
+                    remainingDisplay.className = 'text-success';
+                } else {
+                    remainingDisplay.className = 'text-primary';
+                }
+            });
+        });
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            let total = 0;
+            document.querySelectorAll('.allocation-amount').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            
+            if (total > {{ remaining_amount }}) {
+                e.preventDefault();
+                alert('Total allocation cannot exceed remaining budget!');
+                return false;
+            }
+            
+            if (total === 0) {
+                e.preventDefault();
+                alert('Please allocate at least some amount to a goal!');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html> 

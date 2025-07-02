@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense - BudgetWise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 50px auto;
+            padding: 40px;
+            max-width: 600px;
+        }
+        
+        .form-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .category-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .split-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-title">
+                <h2><i class="fas fa-plus-circle"></i> Add Expense</h2>
+                <p class="text-muted">Track your expenses with category classification and multi-month splitting</p>
+            </div>
+            
+            <div class="category-info">
+                <h6><i class="fas fa-info-circle"></i> Budget Categories:</h6>
+                <ul class="mb-0">
+                    <li><strong>Needs (50%):</strong> Housing, utilities, groceries, transportation</li>
+                    <li><strong>Wants (30%):</strong> Dining out, entertainment, hobbies, shopping</li>
+                    <li><strong>Savings (20%):</strong> Emergency fund, investments, debt repayment</li>
+                </ul>
+            </div>
+            
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.amount.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">£</span>
+                                {{ form.amount(class="form-control", placeholder="Enter expense amount") }}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.amount.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.category.label(class="form-label") }}
+                            {{ form.category(class="form-select") }}
+                            {% if form.category.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.category.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", placeholder="Describe the expense") }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.date.label(class="form-label") }}
+                            {{ form.date(class="form-control", type="date") }}
+                            {% if form.date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.split_months.label(class="form-label") }}
+                            {{ form.split_months(class="form-select") }}
+                            {% if form.split_months.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.split_months.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="split-info" id="splitInfo">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Split Expense:</strong> This expense will be distributed evenly across the selected number of months.
+                    <div id="splitCalculation"></div>
+                </div>
+                
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-success btn-submit") }}
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Show split info when more than 1 month is selected
+        document.getElementById('split_months').addEventListener('change', function() {
+            const splitMonths = parseInt(this.value);
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const splitInfo = document.getElementById('splitInfo');
+            const splitCalculation = document.getElementById('splitCalculation');
+            
+            if (splitMonths > 1) {
+                splitInfo.style.display = 'block';
+                const monthlyAmount = amount / splitMonths;
+                splitCalculation.innerHTML = `<br>Monthly amount: £${monthlyAmount.toFixed(2)}`;
+            } else {
+                splitInfo.style.display = 'none';
+            }
+        });
+        
+        // Update split calculation when amount changes
+        document.getElementById('amount').addEventListener('input', function() {
+            const splitMonths = parseInt(document.getElementById('split_months').value);
+            const amount = parseFloat(this.value) || 0;
+            const splitCalculation = document.getElementById('splitCalculation');
+            
+            if (splitMonths > 1 && amount > 0) {
+                const monthlyAmount = amount / splitMonths;
+                splitCalculation.innerHTML = `<br>Monthly amount: £${monthlyAmount.toFixed(2)}`;
+            }
+        });
+    </script>
+</body>
+</html> 
